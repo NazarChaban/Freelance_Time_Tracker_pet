@@ -11,14 +11,14 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from dotenv import load_dotenv
+from datetime import timedelta
 from pathlib import Path
 import os
-
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(dotenv_path=BASE_DIR.parent / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -31,6 +31,7 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = 'users.CustomUser'
 
 # Application definition
 
@@ -41,6 +42,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    'users',
+    'clients',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +57,17 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
 
 ROOT_URLCONF = 'freelance_time_tracker.urls'
 
