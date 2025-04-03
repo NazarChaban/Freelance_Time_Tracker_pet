@@ -21,4 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls', namespace='users')),
     path('clients/', include('clients.urls', namespace='clients')),
+    path(
+        'time-tracking/',
+        include('time_tracking.urls', namespace='time_tracking')
+    ),
 ]
