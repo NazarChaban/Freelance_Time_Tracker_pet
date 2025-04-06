@@ -8,6 +8,7 @@ __pycache__/
 
 # Static
 static/
+Invoices/
 
 # Distribution / packaging
 .Python

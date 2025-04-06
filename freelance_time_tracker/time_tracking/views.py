@@ -1,4 +1,6 @@
-from .models import TimeEntry, TimeTrackingLog
+from time_tracking.models import (
+    TimeEntry, TimeTrackingLog, Invoice, InvoiceTimeEntry
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from clients.models import Client
@@ -8,7 +10,7 @@ from django.utils import timezone
 
 class StartTimeTrackingView(APIView):
     """
-    time-tracking/start/
+    time-tracking/start/?client_id=<client_id>
     """
     def post(self, request):
         client_id = request.data.get('client_id')
@@ -64,6 +66,9 @@ class StartTimeTrackingView(APIView):
 
 
 class StopTimeTrackingView(APIView):
+    """
+    time-tracking/stop/
+    """
     def post(self, request):
         user = request.user
         time_entry = TimeEntry.objects.filter(
@@ -91,6 +96,17 @@ class StopTimeTrackingView(APIView):
             details=details
         )
 
+        invoice, _ = Invoice.objects.get_or_create(
+            user=user,
+            client=client,
+            done=False
+        )
+
+        InvoiceTimeEntry.objects.create(
+            invoice=invoice,
+            time_entry=time_entry
+        )
+
         duration = 0
         if time_entry.duration:
             duration = time_entry.duration.total_seconds()
@@ -105,3 +121,83 @@ class StopTimeTrackingView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+def format_time(seconds):
+    seconds = int(seconds)
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+
+class ListInvoiveView(APIView):
+    """
+    time-tracking//invoices/
+    time-tracking//invoices/?client_id=<client_id>
+    time-tracking//invoices/?invoice_id=<invoice_id>
+    """
+    def get(self, request):
+        invoices = Invoice.objects.filter(user=request.user, done=True)
+        client_id = request.query_params.get('client_id')
+        invoice_id = request.query_params.get('invoice_id')
+
+        if client_id:
+            invoices = invoices.filter(client_id=client_id)
+        if invoice_id:
+            invoices = invoices.filter(id=invoice_id)
+
+        if not invoices.exists():
+            return Response(
+                {"detail": "Invoices not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        invoice_data = [
+            {
+                "id": invoice.id,
+                "client": invoice.client.name,
+                "issued_at": invoice.issued_at,
+                "total_time_seconds": invoice.total_time,
+                "total_time": format_time(invoice.total_time.total_seconds()),
+                "total_amount": invoice.total_amount,
+                "invoice_file": invoice.invoice_file.url
+            } for invoice in invoices
+        ]
+        return Response(
+            invoice_data,
+            status=status.HTTP_200_OK
+        )
+
+
+class GenerateInvoiceView(APIView):
+    """
+    time-tracking/generate-invoice/?client_id=<client_id>
+    """
+    def post(self, request):
+        client_id = request.data.get('client_id')
+        if not client_id:
+            return Response(
+                {"detail": "client_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            invoice = Invoice.objects.get(
+                user=request.user, client_id=client_id, done=False
+            )
+        except Invoice.DoesNotExist:
+            return Response(
+                {"detail": "No open invoices for this client"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        invoice.generate_invoice()
+        return Response({
+            "detail": "Invoice generated",
+            "id": invoice.id,
+            "client": invoice.client.name,
+            "total_time_seconds": invoice.total_time.total_seconds(),
+            "total_amount": invoice.total_amount,
+            "invoice_file": invoice.invoice_file.url
+        }, status=status.HTTP_200_OK)
