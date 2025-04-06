@@ -1,0 +1,47 @@
+name: Django CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: dev_env
+
+    services:
+      db:
+        image: postgres:12
+        env:
+          POSTGRES_USER: '${{ secrets.POSTGRES_USER }}'
+          POSTGRES_PASSWORD: '${{ secrets.POSTGRES_PASSWORD }}'
+          POSTGRES_DB: '${{ secrets.POSTGRES_DB }}'
+        ports: ['${{ secrets.POSTGRES_PORT }}:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.12
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install coverage
+
+    - name: Run tests with coverage
+      working-directory: freelance_time_tracker
+      run: |
+        coverage run -m pytest .
+        coverage report
+      env:
+        DJANGO_SETTINGS_MODULE: freelance_time_tracker.settings
+        POSTGRES_DB: '${{ secrets.POSTGRES_DB }}'
+        POSTGRES_USER: '${{ secrets.POSTGRES_USER }}'
+        POSTGRES_PASSWORD: '${{ secrets.POSTGRES_PASSWORD }}'
+        POSTGRES_HOST: '${{ secrets.POSTGRES_HOST }}'
+        POSTGRES_PORT: '${{ secrets.POSTGRES_PORT }}'
+        SECRET_KEY: '${{ secrets.SECRET_KEY }}'
+        DEBUG: '${ secrets.DEBUG }'
