@@ -25,6 +25,12 @@ jobs:
       with:
         python-version: 3.12
 
+    - name: Set up Redis
+      uses: supercharge/redis-github-action@1.7.0
+      with:
+        redis-version: 7
+        redis-password: ${{ secrets.REDIS_PASSWORD }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -45,3 +51,14 @@ jobs:
         POSTGRES_PORT: '${{ secrets.POSTGRES_PORT }}'
         SECRET_KEY: '${{ secrets.SECRET_KEY }}'
         DEBUG: '${ secrets.DEBUG }'
+        REDIS_PASSWORD: '${{ secrets.REDIS_PASSWORD }}'
+        REDIS_HOST: '${{ secrets.REDIS_HOST }}'
+        REDIS_PORT: '${{ secrets.REDIS_PORT }}'
+        REDIS_DB: '${{ secrets.REDIS_DB }}'
+        EMAIL_BACKEND: '${{ secrets.EMAIL_BACKEND }}'
+        EMAIL_HOST: '${{ secrets.EMAIL_HOST }}'
+        EMAIL_PORT: '${{ secrets.EMAIL_PORT }}'
+        EMAIL_HOST_USER: '${{ secrets.EMAIL_HOST_USER }}'
+        EMAIL_HOST_PASSWORD: '${{ secrets.EMAIL_HOST_PASSWORD }}'
+        EMAIL_USE_TLS: '${{ secrets.EMAIL_USE_TLS }}'
+        EMAIL_FROM: '${{ secrets.EMAIL_FROM }}'
