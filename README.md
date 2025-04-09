@@ -56,10 +56,10 @@ Or if you don't have docker:
 - **POST /time-tracking/generate-invoice/**: Generate an invoice.
 
 ### Clients
-- **GET /clients/api/**: Retrieve clients.
-- **POST /clients/api/**: Create a client.
-- **GET /clients/api/active/**: Retrieve active clients.
-- **GET /clients/api/inactive/**: Retrieve inactive clients.
+- **GET /clients/api/clients/**: Retrieve clients.
+- **POST /clients/api/clients/**: Create a client.
+- **GET /clients/api/clients/active/**: Retrieve active clients.
+- **GET /clients/api/clients/inactive/**: Retrieve inactive clients.
 
 ## API Endpoints Examples
 
